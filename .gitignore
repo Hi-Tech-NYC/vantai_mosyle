@@ -1,0 +1,8 @@
+.env
+bob_staff.json
+
+.DS_Store
+.idea/
+__pycache__/
+
+logs/
