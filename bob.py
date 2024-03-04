@@ -1,10 +1,12 @@
 import json
+import os
 
 
 class HiBob:
     def __init__(self):
         self._output_data = []
-        self._json_file = "./bob_staff.json"
+        self._project_path = os.path.abspath(os.getcwd())
+        self._json_file = f"{self._project_path}/bob_staff.json"
 
     def process_json(self):
         with open(self._json_file) as the_file:
