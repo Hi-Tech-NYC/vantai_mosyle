@@ -40,13 +40,33 @@ class AirTable:
         all_fields = [row.get("fields") for row in table_data]
         return [row.get("name") for row in all_fields]
 
+    def _get_all_employee_ids(self):
+        table_data = self._people_table.all()
+        output = {}
+        for row in table_data:
+            record_id = row.get("id")
+            record_data = row.get("fields")
+            output[record_data.get("employee_id")] = record_id
+        return output
+
     def update_people_table(self, people_data):
-        names_list = self._get_all_names()
+        id_list = self._get_all_employee_ids()
+        all_ids = id_list.keys()
         for person in people_data:
-            person_name = person.get("name")
-            if person_name not in names_list:
+            employee_id = person.get("employee_id")
+            if employee_id not in all_ids:
                 self._logger.write_log(f"Added {person.get('name')} to the table")
                 self._people_table.create(fields=person, typecast=True)
+            else:
+                record_id = id_list.get(employee_id)
+                current_data = self._people_table.get(record_id).get("fields")
+                differences = self.get_dict_differences(person, current_data)
+                if len(differences) > 0:
+                    self._logger.write_log(f"Update {person.get('name')} - {differences}")
+                    new_data = {}
+                    for key in differences:
+                        new_data[key] = person[key]
+                    self._people_table.update(record_id, fields=new_data, typecast=True)
 
     def update_inventory_table(self, inventory_data):
         serial_numbers = self._get_serial_numbers()

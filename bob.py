@@ -1,41 +1,50 @@
-import json
 import os
+import dotenv
+import requests
 
 
 class HiBob:
     def __init__(self):
+        dotenv.load_dotenv()
         self._output_data = []
-        self._project_path = os.path.dirname(os.path.abspath(__file__))
-        self._json_file = os.path.join(self._project_path, "bob_staff.json")
+        self._bob_user = os.getenv("BOB_USERNAME")
+        self._bob_password = os.getenv("BOB_PASSWORD")
 
-    def process_json(self):
-        with open(self._json_file) as the_file:
-            data = json.load(the_file)["result"]
-            self._process_block(data)
+    def get_bob_data(self):
+        url = ("https://api.hibob.com/v1/people?humanReadable=true"
+               "&includeHumanReadable=false")
+        headers = {"accept": "application/json"}
+        response = requests.get(url, headers=headers, auth=(self._bob_user, self._bob_password))
+        json_data = response.json()
+        if response.status_code == 200:
+            employees = json_data.get("employees")
+            for employee in employees:
+                self._format_data(employee)
 
     def get_people_info(self):
         return self._output_data
 
-    def get_people_names(self):
-        output = [person.get("name") for person in self._output_data]
-        return output
+    @staticmethod
+    def format_date(date):
+        date_array = date.split("/")
+        return f"{date_array[2]}-{date_array[1]}-{date_array[0]}"
 
     def _format_data(self, data):
         displayName = data.get("displayName", "n/a")
-        title = data.get("/work/title", {}).get("humanReadable", "n/a")
-        department = data.get("/work/department", {}).get("humanReadable", "n/a")
-        location = data.get("/work/siteId", {}).get("humanReadable", "n/a")
+        work_stuff = data.get("work", {})
+        title = work_stuff.get("title", "n/a")
+        department = work_stuff.get("department", "n/a")
+        location = work_stuff.get("site", "n/a")
+        email = data.get("email", "n/a")
+        employee_id = data.get("id", "n/a")
+        start_date = self.format_date(work_stuff.get("startDate", "n/a"))
         output = {
+            "employee_id": employee_id,
             "name": displayName,
             "title": title,
             "department": department,
-            "location": location
-
+            "location": location,
+            "email": email,
+            "start_date": start_date,
         }
         self._output_data.append(output)
-
-    def _process_block(self, block):
-        self._format_data(block.get("data"))
-        if len(block.get("children", [])) > 0:
-            for child in block.get("children", []):
-                self._process_block(child)

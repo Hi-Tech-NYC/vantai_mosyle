@@ -10,7 +10,7 @@ if __name__ == "__main__":
     logger.write_log(f"Starting at {time.ctime()}")
 
     bob = HiBob()
-    bob.process_json()
+    bob.get_bob_data()
     all_people = bob.get_people_info()
 
     airtable = AirTable(logger=logger)
